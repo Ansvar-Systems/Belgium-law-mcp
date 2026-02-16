@@ -1,0 +1,28 @@
+schema_version: '1.0'
+mcp_name: 'Belgian Law MCP'
+jurisdiction: 'BE'
+
+sources:
+  - name: 'Justel'
+    authority: 'FPS Justice (Service public federal Justice)'
+    official_portal: 'https://www.ejustice.just.fgov.be'
+    canonical_identifier: 'Short title + date (e.g., "Loi du 30 juillet 2018")'
+    retrieval_method: 'HTML_SCRAPE'
+    api_documentation: 'https://www.ejustice.just.fgov.be/cgi_loi/loi.pl'
+    update_frequency: 'weekly'
+    last_ingested: '2026-02-16'
+    license_or_terms:
+      type: 'Government open data'
+      url: 'https://www.ejustice.just.fgov.be'
+      summary: 'Belgian government consolidated legislation, open access'
+    coverage:
+      scope: 'Belgian federal laws (cybersecurity and data protection scope, bilingual FR/NL)'
+      limitations: 'Initial release covers key cybersecurity legislation only'
+    languages:
+      - 'fr'
+      - 'nl'
+
+data_freshness:
+  automated_checks: true
+  check_frequency: 'weekly'
+  last_verified: '2026-02-16'

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/seed/
+data/source/
+.env
+.env.*
+*.log
+.DS_Store
+.vercel
+.serena
+.claude
+coverage/

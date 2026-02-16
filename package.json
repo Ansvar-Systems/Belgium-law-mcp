@@ -1,0 +1,75 @@
+{
+  "name": "@ansvar/belgian-law-mcp",
+  "version": "1.0.0",
+  "description": "Belgian Law MCP — French and Dutch legislation via Model Context Protocol",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "belgium-law-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "data/database.db"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:db": "node --import tsx scripts/build-db.ts",
+    "dev": "node --import tsx src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "ingest": "node --import tsx scripts/ingest.ts",
+    "check-updates": "node --import tsx scripts/check-updates.ts",
+    "test:contract": "vitest run __tests__/contract/",
+    "drift:detect": "node --import tsx scripts/drift-detect.ts",
+    "validate": "npm test && npm run test:contract",
+    "prepublishOnly": "npm run build",
+    "postinstall": "test -d dist || npm run build || true"
+  },
+  "dependencies": {
+    "@ansvar/mcp-sqlite": "^1.0.3",
+    "@modelcontextprotocol/sdk": "^1.25.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jsdom": "^27.0.0",
+    "@types/node": "^22.15.29",
+    "@vercel/node": "^5.6.3",
+    "@vitest/coverage-v8": "^4.0.18",
+    "better-sqlite3": "^12.6.2",
+    "fast-xml-parser": "^5.3.5",
+    "jsdom": "^28.1.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ansvar-Systems/Belgium-law-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Ansvar-Systems/Belgium-law-mcp/issues"
+  },
+  "homepage": "https://github.com/Ansvar-Systems/Belgium-law-mcp#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "claude",
+    "be-law",
+    "belgium",
+    "legal",
+    "compliance",
+    "justel",
+    "ansvar"
+  ],
+  "author": "Ansvar Systems AB <hello@ansvar.ai>",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  }
+}
