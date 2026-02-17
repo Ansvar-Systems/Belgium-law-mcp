@@ -66,7 +66,7 @@ jobs:
 
       - name: Upload check output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: check-updates-log
           path: check-updates.log
