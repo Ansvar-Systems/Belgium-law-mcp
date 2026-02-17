@@ -80,7 +80,7 @@ jobs:
     steps:
       - name: Create or update status issue
         if: needs.check-updates.outputs.updates_found == 'true' || needs.check-updates.outputs.source_errors == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const updatesFound = '${{ needs.check-updates.outputs.updates_found }}' === 'true';
@@ -131,7 +131,7 @@ jobs:
 
       - name: Close stale update issues when clean
         if: needs.check-updates.outputs.updates_found != 'true' && needs.check-updates.outputs.source_errors != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: issues } = await github.rest.issues.listForRepo({
