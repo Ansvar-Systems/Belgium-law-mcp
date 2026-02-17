@@ -1,0 +1,198 @@
+name: Daily Data Freshness Check
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      auto_update:
+        description: 'Automatically ingest latest years and open a PR with updated data'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+    outputs:
+      updates_found: ${{ steps.check.outputs.updates_found }}
+      source_errors: ${{ steps.check.outputs.source_errors }}
+      status_code: ${{ steps.check.outputs.status_code }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build
+        run: npm run build
+
+      - name: Check upstream freshness
+        id: check
+        shell: bash
+        run: |
+          set +e
+          npm run check-updates 2>&1 | tee check-updates.log
+          STATUS=${PIPESTATUS[0]}
+
+          echo "status_code=$STATUS" >> "$GITHUB_OUTPUT"
+
+          if [ "$STATUS" -eq 1 ]; then
+            echo "updates_found=true" >> "$GITHUB_OUTPUT"
+            echo "source_errors=false" >> "$GITHUB_OUTPUT"
+          elif [ "$STATUS" -eq 0 ]; then
+            echo "updates_found=false" >> "$GITHUB_OUTPUT"
+            echo "source_errors=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "updates_found=false" >> "$GITHUB_OUTPUT"
+            echo "source_errors=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          exit 0
+
+      - name: Upload check output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-updates-log
+          path: check-updates.log
+          retention-days: 14
+
+  report:
+    needs: check-updates
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create or update status issue
+        if: needs.check-updates.outputs.updates_found == 'true' || needs.check-updates.outputs.source_errors == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const updatesFound = '${{ needs.check-updates.outputs.updates_found }}' === 'true';
+            const sourceErrors = '${{ needs.check-updates.outputs.source_errors }}' === 'true';
+            const statusCode = '${{ needs.check-updates.outputs.status_code }}';
+
+            const title = sourceErrors
+              ? 'Data Freshness Check: Source errors detected'
+              : 'Data Freshness Check: Updates available';
+
+            const body = [
+              `Automated data freshness check run: ${new Date().toISOString()}`,
+              '',
+              `- updates_found: ${updatesFound}`,
+              `- source_errors: ${sourceErrors}`,
+              `- check_exit_code: ${statusCode}`,
+              '',
+              'Recommended actions:',
+              '- Run `npm run check-updates` locally for details.',
+              '- If updates are available, run ingestion and rebuild database.',
+              '- Re-run contract tests before release.',
+            ].join('\n');
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'data-update',
+            });
+
+            if (issues.length > 0) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                title,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['data-update', 'automated'],
+              });
+            }
+
+      - name: Close stale update issues when clean
+        if: needs.check-updates.outputs.updates_found != 'true' && needs.check-updates.outputs.source_errors != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'data-update',
+            });
+
+            for (const issue of issues) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: 'completed',
+              });
+            }
+
+  auto-update:
+    needs: [check-updates]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.auto_update == 'true' && needs.check-updates.outputs.updates_found == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build
+        run: npm run build
+
+      - name: Ingest latest years and rebuild
+        shell: bash
+        run: |
+          YEAR=$(date -u +%Y)
+          PREV=$((YEAR - 1))
+          npm run ingest -- --year-start "$PREV" --year-end "$YEAR" --phase all --lang both
+          npm run build:db
+
+      - name: Validate updated dataset
+        run: npm test
+
+      - name: Create pull request with updated data
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/auto-update-belgian-law-data
+          commit-message: 'chore(data): auto-update Belgian law database'
+          title: 'chore(data): auto-update Belgian law database'
+          body: |
+            Automated update generated by the daily freshness workflow.
+
+            - Re-ingested the latest two years from source indexes
+            - Rebuilt `data/database.db`
+            - Ran full test suite
+          labels: |
+            data-update
+            automated
