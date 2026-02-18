@@ -76,7 +76,7 @@
     {
       "id": "be-006",
       "category": "search",
-      "description": "Search for 'données' (data) across Belgian statutes",
+      "description": "Search for 'données' (data) — special character test",
       "tool": "search_legislation",
       "input": {
         "query": "données",
@@ -156,13 +156,179 @@
     {
       "id": "be-012",
       "category": "negative_test",
-      "description": "Empty search query returns empty results",
+      "description": "Empty search query returns empty results gracefully",
       "tool": "search_legislation",
       "input": {
         "query": ""
       },
       "assertions": {
         "handles_gracefully": true
+      }
+    },
+    {
+      "id": "be-013",
+      "category": "search",
+      "description": "Search with FTS5 quoted phrase",
+      "tool": "search_legislation",
+      "input": {
+        "query": "\"protection des données\"",
+        "limit": 5
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "any_result_contains": ["protection"]
+      }
+    },
+    {
+      "id": "be-014",
+      "category": "search",
+      "description": "Search with status filter (in_force only)",
+      "tool": "search_legislation",
+      "input": {
+        "query": "sécurité",
+        "status": "in_force",
+        "limit": 5
+      },
+      "assertions": {
+        "result_not_empty": true
+      }
+    },
+    {
+      "id": "be-015",
+      "category": "citation_roundtrip",
+      "description": "Format citation in full form",
+      "tool": "format_citation",
+      "input": {
+        "citation": "Loi du 2 février 1994, art. 1",
+        "format": "full"
+      },
+      "assertions": {
+        "result_not_empty": true
+      }
+    },
+    {
+      "id": "be-016",
+      "category": "citation_roundtrip",
+      "description": "Format citation in pinpoint form",
+      "tool": "format_citation",
+      "input": {
+        "citation": "Loi du 2 février 1994, art. 1",
+        "format": "pinpoint"
+      },
+      "assertions": {
+        "result_not_empty": true
+      }
+    },
+    {
+      "id": "be-017",
+      "category": "negative_test",
+      "description": "Validate non-existent citation handles gracefully",
+      "tool": "validate_citation",
+      "input": {
+        "citation": "Loi du 99 janvier 9999, art. 999"
+      },
+      "assertions": {
+        "handles_gracefully": true
+      }
+    },
+    {
+      "id": "be-018",
+      "category": "negative_test",
+      "description": "Check currency of non-existent statute handles gracefully",
+      "tool": "check_currency",
+      "input": {
+        "document_id": "nonexistent-statute-0000"
+      },
+      "assertions": {
+        "handles_gracefully": true
+      }
+    },
+    {
+      "id": "be-019",
+      "category": "metadata",
+      "description": "list_sources returns provenance data",
+      "tool": "list_sources",
+      "input": {},
+      "assertions": {
+        "result_not_empty": true,
+        "text_contains": ["Justel", "jurisdiction", "Belgium"]
+      }
+    },
+    {
+      "id": "be-020",
+      "category": "metadata",
+      "description": "about returns server metadata",
+      "tool": "about",
+      "input": {},
+      "assertions": {
+        "result_not_empty": true,
+        "text_contains": ["server", "dataset", "provenance"]
+      }
+    },
+    {
+      "id": "be-021",
+      "category": "search",
+      "description": "Search with special characters — accented French (à, é, è, ê)",
+      "tool": "search_legislation",
+      "input": {
+        "query": "procédure pénale",
+        "limit": 10
+      },
+      "assertions": {
+        "result_not_empty": true
+      }
+    },
+    {
+      "id": "be-022",
+      "category": "negative_test",
+      "description": "SQL injection attempt returns gracefully",
+      "tool": "search_legislation",
+      "input": {
+        "query": "'; DROP TABLE legal_documents; --",
+        "limit": 5
+      },
+      "assertions": {
+        "handles_gracefully": true
+      }
+    },
+    {
+      "id": "be-023",
+      "category": "search",
+      "description": "Search with limit=1 returns exactly 1 result",
+      "tool": "search_legislation",
+      "input": {
+        "query": "protection",
+        "limit": 1
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "min_results": 1
+      }
+    },
+    {
+      "id": "be-024",
+      "category": "article_retrieval",
+      "description": "Retrieve all provisions for a statute (no section specified)",
+      "tool": "get_provision",
+      "input": {
+        "document_id": "loi-1994-02-02-1994009284-fr"
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "min_results": 2
+      }
+    },
+    {
+      "id": "be-025",
+      "category": "eu_cross_reference",
+      "description": "Search EU implementations for data protection",
+      "tool": "search_eu_implementations",
+      "input": {
+        "query": "data protection",
+        "limit": 5
+      },
+      "assertions": {
+        "result_not_empty": true
       }
     }
   ]

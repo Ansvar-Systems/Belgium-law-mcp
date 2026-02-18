@@ -3,7 +3,7 @@
  */
 
 import type { Database } from '@ansvar/mcp-sqlite';
-import { buildFtsQueryVariants } from '../utils/fts-query.js';
+import { buildFtsQueryVariants, sanitizeFtsInput } from '../utils/fts-query.js';
 import { normalizeAsOfDate } from '../utils/as-of-date.js';
 import { generateResponseMetadata, type ToolResponse } from '../utils/metadata.js';
 
@@ -43,7 +43,7 @@ export async function searchLegislation(
   }
 
   const limit = Math.min(Math.max(input.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
-  const queryVariants = buildFtsQueryVariants(input.query);
+  const queryVariants = buildFtsQueryVariants(sanitizeFtsInput(input.query));
   const asOfDate = normalizeAsOfDate(input.as_of_date);
 
   const runCurrentQuery = (ftsQuery: string): SearchLegislationResult[] => {

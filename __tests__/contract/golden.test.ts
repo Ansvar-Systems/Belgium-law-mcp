@@ -7,7 +7,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import Database from '@ansvar/mcp-sqlite';
-import { registerTools } from '../../src/tools/registry.js';
+import { registerTools, type AboutContext } from '../../src/tools/registry.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -154,7 +154,12 @@ describe(`Contract tests: ${fixture.mcp_name}`, () => {
       { name: 'belgian-law-test', version: '0.0.0' },
       { capabilities: { tools: {} } },
     );
-    registerTools(server, db);
+    const aboutContext: AboutContext = {
+      version: '0.0.0-test',
+      fingerprint: 'test-fingerprint',
+      dbBuilt: new Date().toISOString(),
+    };
+    registerTools(server, db, aboutContext);
 
     mcpClient = new Client({ name: 'test-client', version: '0.0.0' }, { capabilities: {} });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
